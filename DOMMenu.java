@@ -10,11 +10,15 @@ import javax.xml.transform.*;       // import DOM source classes
 //import com.sun.xml.internal.bind.marshaller.NioEscapeHandler;
 import org.w3c.dom.*;               // import DOM
 
+//I imported these
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
 /**
   DOM handler to read XML information, to create this, and to print it.
 
-  @author   CSCU9T4, University of Stirling
-  @version  11/03/20
+  @author   2721415		CSCU9T4, University of Stirling
+  @version  22/03/21
 */
 public class DOMMenu {
 
@@ -40,14 +44,19 @@ public class DOMMenu {
   public static void main(String[] args)  {
     // load XML file into "document"
     loadDocument(args[0]);
-    // print staff.xml using DOM methods and XPath queries
-    printNodes();
-  
-   
+    
+    // validate according to the provided schema
+    if (validateDocument(args[1])) {
+    	// print staff.xml using DOM methods and XPath queries
+    	try { printNodes(); } catch (XPathException e) {
+    		System.out.println("2721415 sucks at programming");
+    	}  // I'm sure this exception won't happen.  It's just an obligation.
+    }
   }
 
   /**
     Set global document by reading the given file.
+    I didn't change anything here.
 
     @param filename     XML file to read
   */
@@ -63,6 +72,7 @@ public class DOMMenu {
 
       // parse the document for later searching
       document = builder.parse(new File(filename));
+      
     }
     catch (Exception exception) {
       System.err.println("could not load document " + exception);
@@ -74,7 +84,7 @@ public class DOMMenu {
    Validate the document given a schema file
    @param filename XSD file to read
   */
-  private static Boolean validateDocument(String filename)  {
+  private static Boolean validateDocument(String filename) {
     try {
       String language = XMLConstants.W3C_XML_SCHEMA_NS_URI;
       SchemaFactory factory = SchemaFactory.newInstance(language);
@@ -82,25 +92,45 @@ public class DOMMenu {
       Validator validator = schema.newValidator();
       validator.validate(new DOMSource(document));
       return true;
-    } catch (Exception e){
-      System.err.println(e);
-      System.err.println("Could not load schema or validate");
-      return false;
+    } catch (SAXParseException e) {  
+    	/* 	Java requires that I catch every one of these potential exceptions.
+    		However, it throws its own exceptions right at the start if the XML is wrong.
+    		Anyway . . .  	*/
+	    System.out.println("Line " + e.getLineNumber() + ": " + e.getMessage());
+	    return false;
+    } catch (IOException e2) {
+    	System.out.println("Could not load schema.");
+    	return false;
+    } catch (SAXException e3) {
+    	// I don't think the user would see this one.
+    	System.out.println("SAX Exception.  It's my fault if this shows up.");
+    	return false;
     }
   }
   /**
     Print nodes using DOM methods and XPath queries.
+ * @throws XPathExpressionException 
   */
-  private static void printNodes() {
-    Node menuItem_1 = document.getFirstChild();
-    Node menuItem_2 = menuItem_1.getFirstChild().getNextSibling();
-    System.out.println("First child is: " + menuItem_1.getNodeName());
-    System.out.println("  Child is: " + menuItem_2.getNodeName());
-
+  private static void printNodes() throws XPathExpressionException {
+    /*Node menu = document.getFirstChild();
+    Node item = menu.getFirstChild().getNextSibling();
+    System.out.println("First child is: " + menu.getNodeName());
+    System.out.println("  Child is: " + item.getNodeName());*/
+    
+	//It doesn't throw an exception if "i" increments too many times, but it's ugly.
+    System.out.println("~~~ Menu ~~~");
+    for (int i = 1; i < 9; i++) {
+    	String foodName = path.evaluate("/menu/item["+i+"]/name", document);
+    	String foodPrice = path.evaluate("/menu/item["+i+"]/price", document);
+    	String foodDesc = path.evaluate("/menu/item["+i+"]/description", document);
+    	//Little trick from the Systems module
+    	System.out.printf("%15s  £%5s   %s \n", foodName, foodPrice, foodDesc);
+    }
   }
 
   /**
     Get result of XPath query.
+    I didn't bother with this optional thing.  ;)
 
     @param query        XPath query
     @return         result of query
